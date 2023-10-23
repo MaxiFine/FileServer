@@ -1,0 +1,54 @@
+{% extends "_base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block heading %}Login{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Additional CSS styles for login form */
+    .form-control {
+        width: 100%;
+        padding: 12px 20px;
+        margin: 8px 0;
+        box-sizing: border-box;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .form-control:focus {
+        border-color: #007bff;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_email">Email:</label>
+            <input type="email" class="form-control" id="id_email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label for="id_password">Password:</label>
+            <input type="password" class="form-control" id="id_password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+{% endblock %}
+
+
