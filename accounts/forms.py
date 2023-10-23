@@ -15,18 +15,4 @@ class LoginForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
 
-# # USING A CUSTOM LOGIN FOR USERNAME AND EMAIL
-# class CustomAuthenticationForm(AuthenticationForm):
-#     email_or_username = forms.CharField(label='Email or Username:')
-
-#     def clean(self):
-#         email_or_username = self.cleaned_data.get('email_or_username')
-#         password = self.cleaned_data.get('password')
-#         if email_or_username:
-#             try:
-#                 user = CustomUser.objects.get(email=email_or_username)
-#             except CustomUser.DoesNotExist:
-#                 try:
-#                     user = authenticate(email=email_or_username)
-
 

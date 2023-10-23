@@ -5,11 +5,88 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes
+from django.utils.encoding import force_bytes, force_str
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 
 from .forms import LoginForm, SignUpForm
 
 
+# signup view
+def signup_view(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+        
+        # generate a link for user to verify account
+        host_name = request.get_host()
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        activation_link = f"{request.scheme}://{host_name}{reverse('activate', kwargs={'uidb64': uid, 'token': token})}"
+        email_html_message = render_to_string('registration/account_activation_email.html', {
+            'user': user,
+            'activation_link': activation_link,
+        })
+
+        # generate mail after link generation
+        email = EmailMessage(
+            subject='Account Activation',
+            body=email_html_message,
+            from_email='Max',
+            to=[user.email],
+        )
+
+        # send mail to user
+        email.content_subtype = 'html'
+        email.send()
+        messages.info(request=request, message="Account Created, check email for a linl to verify your account")
+        print(user.email)
+        return redirect(login)
+    else:
+        form = SignUpForm()
+        return render(request, 'registration/signup.html', {'form': form,})
+
+
+def activation_link(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = get_user_model().objects.get(pk=uid)
+    except (TypeError, ValueError, get_user_model().DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        messages.success(request=request, message='Account Activated. Kindly Login')
+        return redirect('login')
+    else:
+        messages.error(request, 'Invalid Activation Link')
+        return redirect('login')
+    
+
+def login_view(request):
+    # prevent authenticated user from accessing this view
+    if request.user.is_authenticated:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data.get('email')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, email=email, password=password)
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
+                    return redirect('home')
+                messages.warning(request, 'Account Not Activated. Check Your Email/Spam for Activation link!')
+                return redirect('login')
+            messages.error(request, 'Wrong Email or Password!')
+            return redirect('login')
+    else:
+        form = LoginForm()
+    return render(request, 'registration/login.html', {'form': form})
 
